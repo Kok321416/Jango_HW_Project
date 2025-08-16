@@ -1,94 +1,61 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Магазин продуктов{% endblock %}</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="{% static 'catalog/css/bootstrap.min.css' %}" rel="stylesheet">
-    <!-- Font Awesome для иконок -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <style>
-        /* Дополнительные стили */
-        .form-check-input:checked {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-        
-        .card {
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            border: 1px solid rgba(0, 0, 0, 0.125);
-        }
-        
-        .btn-group .btn {
-            border-radius: 0;
-        }
-        
-        .btn-group .btn:first-child {
-            border-top-left-radius: 0.375rem;
-            border-bottom-left-radius: 0.375rem;
-        }
-        
-        .btn-group .btn:last-child {
-            border-top-right-radius: 0.375rem;
-            border-bottom-right-radius: 0.375rem;
-        }
-    </style>
-</head>
-<body>
-    <!-- Навигационная панель -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'catalog:home' %}">
-                <i class="fas fa-store"></i> Магазин продуктов
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'catalog:home' %}">
-                            <i class="fas fa-home"></i> Главная
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'catalog:product_list' %}">
-                            <i class="fas fa-list"></i> Продукты
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'catalog:contact' %}">
-                            <i class="fas fa-envelope"></i> Контакты
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<!-- Навигационная панель -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'catalog:home' %}">
+            <i class="fas fa-store"></i> Магазин продуктов
+        </a>
 
-    <!-- Основной контент -->
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-    <!-- Сообщения -->
-    {% if messages %}
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'catalog:home' %}">
+                        <i class="fas fa-home"></i> Главная
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'catalog:product_list' %}">
+                        <i class="fas fa-list"></i> Продукты
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'catalog:contact' %}">
+                        <i class="fas fa-envelope"></i> Контакты
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Правая часть навигации -->
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                    <!-- Если пользователь авторизован -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> {{ user.get_full_name|default:user.email }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'users:logout' %}">
+                                <i class="fas fa-sign-out-alt"></i> Выйти
+                            </a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <!-- Если пользователь не авторизован -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'users:login' %}">
+                            <i class="fas fa-sign-in-alt"></i> Войти
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'users:register' %}">
+                            <i class="fas fa-user-plus"></i> Регистрация
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
         </div>
-        {% endfor %}
     </div>
-    {% endif %}
-
-    <!-- Bootstrap JS -->
-    <script src="{% static 'catalog/js/bootstrap.bundle.min.js' %}"></script>
-</body>
-</html>
+</nav>

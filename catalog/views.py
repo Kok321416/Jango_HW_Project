@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Product
 from .forms import ProductForm
 
@@ -52,10 +53,11 @@ class ProductListView(ListView):
         context['title'] = 'Список продуктов'
         return context
 
-class ProductDetailView(DetailView):
+class ProductDetailView(LoginRequiredMixin, DetailView):
     """
     Представление для отображения детальной информации о продукте
     Наследуется от Django Generic View для детального просмотра
+    Требует авторизации пользователя
     """
     model = Product
     template_name = 'catalog/product_detail.html'
@@ -69,11 +71,12 @@ class ProductDetailView(DetailView):
         context['title'] = f'Продукт: {self.object.name}'
         return context
 
-class ProductCreateView(SuccessMessageMixin, CreateView):
+class ProductCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     """
     Представление для создания нового продукта
     Наследуется от Django Generic View для создания объектов
     SuccessMessageMixin добавляет сообщения об успешном создании
+    Требует авторизации пользователя
     """
     model = Product
     form_class = ProductForm
@@ -90,10 +93,11 @@ class ProductCreateView(SuccessMessageMixin, CreateView):
         context['button_text'] = 'Создать продукт'
         return context
 
-class ProductUpdateView(SuccessMessageMixin, UpdateView):
+class ProductUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     """
     Представление для редактирования существующего продукта
     Наследуется от Django Generic View для обновления объектов
+    Требует авторизации пользователя
     """
     model = Product
     form_class = ProductForm
@@ -110,10 +114,11 @@ class ProductUpdateView(SuccessMessageMixin, UpdateView):
         context['button_text'] = 'Сохранить изменения'
         return context
 
-class ProductDeleteView(DeleteView):
+class ProductDeleteView(LoginRequiredMixin, DeleteView):
     """
     Представление для удаления продукта
     Наследуется от Django Generic View для удаления объектов
+    Требует авторизации пользователя
     """
     model = Product
     template_name = 'catalog/product_confirm_delete.html'
