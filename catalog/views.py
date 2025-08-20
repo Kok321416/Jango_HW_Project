@@ -1,6 +1,9 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -93,6 +96,11 @@ class ProductCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         context['button_text'] = 'Создать продукт'
         return context
 
+    def form_valid(self, form):
+        """Автоматически устанавливаем владельца при создании"""
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
+
 class ProductUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     """
     Представление для редактирования существующего продукта
@@ -113,6 +121,17 @@ class ProductUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         context['title'] = f'Редактирование продукта: {self.object.name}'
         context['button_text'] = 'Сохранить изменения'
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        """Проверяем права доступа перед выполнением"""
+        obj = self.get_object()
+        
+        # Проверяем, является ли пользователь владельцем или модератором
+        if obj.owner != request.user and not request.user.has_perm('catalog.delete_product'):
+            return HttpResponseForbidden("У вас нет прав для редактирования этого продукта")
+        
+        return super().dispatch(request, *args, **kwargs)
+
 
 class ProductDeleteView(LoginRequiredMixin, DeleteView):
     """
@@ -138,7 +157,18 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
         messages.success(request, f"Продукт '{product.name}' успешно удален!")
         
         return response
-    
+
+    def dispatch(self, request, *args, **kwargs):
+        """Проверяем права доступа перед выполнением"""
+        obj = self.get_object()
+        
+        # Проверяем, является ли пользователь владельцем или модератором
+        if obj.owner != request.user and not request.user.has_perm('catalog.delete_product'):
+            return HttpResponseForbidden("У вас нет прав для удаления этого продукта")
+        
+        return super().dispatch(request, *args, **kwargs)
+
+
     def get_context_data(self, **kwargs):
         """
         Добавляем дополнительный контекст в шаблон
@@ -146,4 +176,21 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Удаление продукта: {self.object.name}'
         return context    
+    
+
+class UnpublishProductView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'catalog.can_unpublish_product'
+    
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        
+        if not request.user.has_perm('catalog.can_unpublish_product'):
+            return HttpResponseForbidden("У вас нет прав для отмены публикации")
+        
+        product.is_published = False
+        product.save()
+        messages.success(request, f"Продукт '{product.name}' снят с публикации")
+        
+        return redirect('catalog:product_detail', pk=pk)
+    
     

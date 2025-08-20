@@ -32,11 +32,26 @@ class Product(models.Model):
         default=True,
         verbose_name="Активен"
     )
-
+    is_published = models.BooleanField(
+        default=False,
+        verbose_name="Опубликован",
+        help_text="Отметьте, если продукт готов к публикации"
+    )
+    owner = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="Владелец",
+    )
+    
     class Meta:
         verbose_name = "Продукт"
         verbose_name_plural = "Продукты"
         ordering = ['-created_at']
+        permissions = [
+            ("can_unpublish_product", "Может отменять публикацию продукта"),
+        ]
 
     def __str__(self):
         return f"{self.name} - {self.price} руб."
