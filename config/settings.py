@@ -27,7 +27,17 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Настройка кастомной модели пользователя
+AUTH_USER_MODEL = 'users.User'
 
+# Настройки для загрузки файлов (аватары)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Настройки для авторизации
+LOGIN_URL = 'users:login'
+LOGIN_REDIRECT_URL = 'catalog:home'
+LOGOUT_REDIRECT_URL = 'catalog:home'
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,6 +48,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "catalog",
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -55,7 +66,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -117,6 +128,20 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "catalog/static")]
+STATICFILES_DIRS = [
+    BASE_DIR / "catalog" / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Настройки почтового сервера
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # SMTP сервер Gmail
+EMAIL_PORT = 587  # Порт для TLS
+EMAIL_USE_TLS = True  # Использовать TLS шифрование
+EMAIL_USE_SSL = False  # Не использовать SSL
+EMAIL_HOST_USER = 'your-email@gmail.com'  # Ваш Gmail адрес
+EMAIL_HOST_PASSWORD = 'your-app-password'  # Пароль приложения Gmail
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'  # Email отправителя по умолчанию
