@@ -7,8 +7,13 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.core.cache import cache
+from django.conf import settings
 from .models import Product
 from .forms import ProductForm
+from .services import ProductService
 
 def home(request):
     """
@@ -33,34 +38,40 @@ def contact(request):
     return render(request, 'contacts.html', context)
 
 class ProductListView(ListView):
-    """
-    Представление для отображения списка всех продуктов
-    Наследуется от Django Generic View для списков
-    """
+    """Представление для отображения списка всех продуктов с кешированием"""
     model = Product
     template_name = 'catalog/product_list.html'
     context_object_name = 'products'
     paginate_by = 10
     
     def get_queryset(self):
-        """
-        Переопределяем queryset для фильтрации только активных продуктов
-        """
-        return Product.objects.filter(is_active=True).order_by('-created_at')
+        """Получаем кешированный список продуктов"""
+        # Используем сервисный слой для получения продуктов
+        return ProductService.get_all_products()
     
     def get_context_data(self, **kwargs):
-        """
-        Добавляем дополнительный контекст в шаблон
-        """
+        """Добавляем дополнительный контекст"""
         context = super().get_context_data(**kwargs)
         context['title'] = 'Список продуктов'
+        
+        # Добавляем информацию о кешировании для отладки
+        if settings.DEBUG:
+            cache_key = 'all_products_list'
+            cache_info = cache.get(cache_key)
+            context['cache_info'] = {
+                'is_cached': cache_info is not None,
+                'cache_key': cache_key
+            }
+        
         return context
 
+@method_decorator(cache_page(60*15), name='dispatch')
 class ProductDetailView(LoginRequiredMixin, DetailView):
     """
     Представление для отображения детальной информации о продукте
     Наследуется от Django Generic View для детального просмотра
     Требует авторизации пользователя
+    Кешируется на 15 минут
     """
     model = Product
     template_name = 'catalog/product_detail.html'
@@ -99,7 +110,12 @@ class ProductCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     def form_valid(self, form):
         """Автоматически устанавливаем владельца при создании"""
         form.instance.owner = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        
+        # Очищаем кеш после создания продукта
+        ProductService.clear_all_products_cache()
+        
+        return response
 
 class ProductUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     """
@@ -132,6 +148,11 @@ class ProductUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         
         return super().dispatch(request, *args, **kwargs)
 
+    def form_valid(self, form):
+        """Очищаем кеш после обновления продукта"""
+        response = super().form_valid(form)
+        ProductService.clear_all_products_cache()
+        return response
 
 class ProductDeleteView(LoginRequiredMixin, DeleteView):
     """
@@ -156,6 +177,9 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
         # Добавляем сообщение об успешном удалении
         messages.success(request, f"Продукт '{product.name}' успешно удален!")
         
+        # Очищаем кеш после удаления продукта
+        ProductService.clear_all_products_cache()
+        
         return response
 
     def dispatch(self, request, *args, **kwargs):
@@ -168,15 +192,13 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
         
         return super().dispatch(request, *args, **kwargs)
 
-
     def get_context_data(self, **kwargs):
         """
         Добавляем дополнительный контекст в шаблон
         """
         context = super().get_context_data(**kwargs)
         context['title'] = f'Удаление продукта: {self.object.name}'
-        return context    
-    
+        return context
 
 class UnpublishProductView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = 'catalog.can_unpublish_product'
@@ -191,6 +213,37 @@ class UnpublishProductView(LoginRequiredMixin, PermissionRequiredMixin, View):
         product.save()
         messages.success(request, f"Продукт '{product.name}' снят с публикации")
         
+        # Очищаем кеш после изменения статуса публикации
+        ProductService.clear_all_products_cache()
+        
         return redirect('catalog:product_detail', pk=pk)
+
+class CategoryProductsView(ListView):
+    """Представление для отображения продуктов по категории"""
+    template_name = 'catalog/category_products.html'
+    context_object_name = 'products'
+    paginate_by = 12
     
+    def get_queryset(self):
+        """Получаем продукты по категории через сервисный слой"""
+        category_id = self.kwargs.get('category_id')
+        return ProductService.get_products_by_category(category_id)
     
+    def get_context_data(self, **kwargs):
+        """Добавляем информацию о категории в контекст"""
+        context = super().get_context_data(**kwargs)
+        category_id = self.kwargs.get('category_id')
+        
+        # Получаем информацию о категории через сервис
+        category = ProductService.get_category_info(category_id)
+        
+        if category:
+            context['category'] = category
+            context['title'] = f'Продукты в категории: {category.name}'
+        else:
+            context['category'] = None
+            context['title'] = 'Категория не найдена'
+        
+        return context
+
+

@@ -6,10 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Магазин продуктов{% endblock %}</title>
     
+    <!-- Google Fonts для красивых шрифтов -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Bootstrap CSS -->
     <link href="{% static 'catalog/css/bootstrap.min.css' %}" rel="stylesheet">
     <!-- Font Awesome для иконок -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Подключение вашего кастомного CSS -->
+    <link href="{% static 'catalog/css/custom.css' %}" rel="stylesheet">
     
     <style>
         /* Дополнительные стили */

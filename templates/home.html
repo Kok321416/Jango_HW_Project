@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок с анимацией -->
+            <div class="text-center mb-5">
+                <h1 class="display-4 fade-in-up mb-3">{{ title }}</h1>
+                <p class="lead text-muted fade-in-up">Добро пожаловать в наш магазин продуктов!</p>
+            </div>
+            
+            {% if products %}
+                <!-- Статистика -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card glass-effect text-center hover-lift">
+                            <div class="card-body">
+                                <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                                <h5 class="card-title">Всего продуктов</h5>
+                                <p class="display-6 text-primary">{{ products|length }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card glass-effect text-center hover-lift">
+                            <div class="card-body">
+                                <i class="fas fa-star fa-3x text-warning mb-3"></i>
+                                <h5 class="card-title">Активных</h5>
+                                <p class="display-6 text-success">{{ products|length }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card glass-effect text-center hover-lift">
+                            <div class="card-body">
+                                <i class="fas fa-clock fa-3x text-info mb-3"></i>
+                                <h5 class="card-title">Обновлено сегодня</h5>
+                                <p class="display-6 text-info">{{ products|length }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Последние продукты -->
+                <h2 class="mb-4 fade-in-up">Последние добавленные продукты</h2>
+                <div class="row">
+                    {% for product in products|slice:":6" %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card hover-lift">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ product.name }}</h5>
+                                <p class="card-text">{{ product.description|truncatewords:15 }}</p>
+                                <p class="card-text price">
+                                    <strong>{{ product.price }} руб.</strong>
+                                </p>
+                                
+                                <!-- Статус -->
+                                <div class="mb-2">
+                                    {% if product.is_published %}
+                                        <span class="badge bg-primary">Опубликован</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Черновик</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'catalog:product_detail' product.pk %}" 
+                                   class="btn btn-outline-primary btn-sm hover-lift w-100">
+                                    <i class="fas fa-eye"></i> Просмотреть
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Кнопка "Показать все" -->
+                <div class="text-center mt-4">
+                    <a href="{% url 'catalog:product_list' %}" class="btn btn-primary btn-lg hover-lift">
+                        <i class="fas fa-list"></i> Показать все продукты
+                    </a>
+                </div>
+            {% else %}
+                <!-- Если продуктов нет -->
+                <div class="text-center">
+                    <div class="alert alert-info glass-effect">
+                        <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
+                        <h4>Продукты пока не добавлены</h4>
+                        <p class="lead">Будьте первым, кто добавит продукт в наш магазин!</p>
+                        <a href="{% url 'catalog:product_create' %}" class="btn btn-primary btn-lg hover-lift">
+                            <i class="fas fa-plus"></i> Добавить первый продукт
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

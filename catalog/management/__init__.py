@@ -1,1 +1,1 @@
-# Пустой файл для обозначения пакета Python
+# Management commands package
