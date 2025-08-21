@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if category %}
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'catalog:home' %}">Главная</a></li>
+                        <li class="breadcrumb-item active">{{ category.name }}</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="mb-4">{{ category.name }}</h1>
+                
+                {% if category.description %}
+                    <p class="text-muted mb-4">{{ category.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if products %}
+            <div class="row">
+                {% for product in products %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card hover-lift">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ product.name }}</h5>
+                                <p class="card-text">{{ product.description|truncatewords:20 }}</p>
+                                <div class="price">₽{{ product.price }}</div>
+                                
+                                {% if product.is_published %}
+                                    <span class="badge bg-success">Опубликован</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Черновик</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-footer">
+                                <a href="{% url 'catalog:product_detail' product.pk %}" 
+                                   class="btn btn-primary btn-sm">
+                                    Подробнее
+                                </a>
+                                
+                                {% if user == product.owner %}
+                                    <a href="{% url 'catalog:product_update' product.pk %}" 
+                                       class="btn btn-outline-warning btn-sm">
+                                        Редактировать
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Пагинация -->
+            {% if is_paginated %}
+                <nav aria-label="Навигация по страницам">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">Первая</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+            
+        {% else %}
+            <div class="alert alert-info">
+                В данной категории пока нет продуктов.
+            </div>
+        {% endif %}
+        
+    {% else %}
+        <div class="alert alert-warning">
+            Категория не найдена.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
